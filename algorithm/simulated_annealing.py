@@ -10,12 +10,7 @@ from .base import IterativeTSPSolver, StepReport
 
 
 class SimulatedAnnealing(IterativeTSPSolver):
-    """Iterative simulated annealing.
-
-    At each step, proposes a random tweak (neighbor) to the current route.
-    Accepts or rejects based on cost difference and current temperature.
-    Temperature is updated according to the cooling schedule.
-    """
+    """Iterative simulated annealing."""
 
     def __init__(
         self,
@@ -24,13 +19,6 @@ class SimulatedAnnealing(IterativeTSPSolver):
         cooling_schedule: Callable[[float], float],
         seed: int | None = None,
     ):
-        """
-        Args:
-            instance: TSPInstance to solve.
-            start_temperature: Initial temperature.
-            cooling_schedule: Function (T) -> new T.
-            seed: Optional random seed.
-        """
         self.instance = instance
         self.start_temperature = start_temperature
         self.cooling_schedule = cooling_schedule
@@ -57,7 +45,7 @@ class SimulatedAnnealing(IterativeTSPSolver):
         self.temperature = self.start_temperature
 
     def get_random_neighbour(self, route: List[int]) -> List[int]:
-        """Return a new route using random 2-opt move"""
+        """Random 2-opt neighbour."""
         n = len(route)
         if n < 2:
             return list(route)
@@ -68,23 +56,15 @@ class SimulatedAnnealing(IterativeTSPSolver):
 
     def step(self) -> StepReport:
         self.iteration += 1
-        improved = False
-
-        # Propose a tweak (neighbor)
         candidate = self.get_random_neighbour(self.route)
         candidate_cost = self.instance.route_cost(candidate)
         delta = candidate_cost - self.current_cost
 
-        if delta < 0:
-            # Always accept better solutions
-            accept = True
-        elif self.temperature > 0:
-            # Accept worse solutions with probability exp(-delta/T)
+        accept = delta < 0
+        if not accept and self.temperature > 0:
             accept = self.rng.random() < math.exp(-delta / self.temperature)
-        else:
-            # When temperature is 0 or negative, only accept better solutions
-            accept = False
 
+        improved = False
         if accept:
             self.route = candidate
             self.current_cost = candidate_cost
