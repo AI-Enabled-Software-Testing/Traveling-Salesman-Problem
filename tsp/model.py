@@ -14,6 +14,7 @@ class City:
 class TSPInstance:
     name: str
     cities: List[City]
+    edge_weight_type: str = "EUC_2D" # Only EUC_2D is supported
 
     def distance(self, i: int, j: int) -> float:
         a = self.cities[i]
