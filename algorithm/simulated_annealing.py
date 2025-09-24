@@ -57,13 +57,13 @@ class SimulatedAnnealing(IterativeTSPSolver):
         self.temperature = self.start_temperature
 
     def get_random_neighbour(self, route: List[int]) -> List[int]:
-        """Return a new route by swapping two random cities."""
+        """Return a new route using random 2-opt move"""
         n = len(route)
         if n < 2:
             return list(route)
-        i, j = self.rng.sample(range(n), 2)
+        i, j = sorted(self.rng.sample(range(n), 2))
         neighbour = list(route)
-        neighbour[i], neighbour[j] = neighbour[j], neighbour[i]
+        neighbour[i:j+1] = reversed(neighbour[i:j+1])
         return neighbour
 
     def step(self) -> StepReport:
