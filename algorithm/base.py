@@ -5,7 +5,8 @@ from typing import List, Protocol
 @dataclass
 class StepReport:
     iteration: int
-    cost: float
+    best_cost: float
+    current_cost: float
     improved: bool
 
 

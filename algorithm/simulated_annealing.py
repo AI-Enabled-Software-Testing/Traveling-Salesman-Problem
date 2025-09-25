@@ -75,7 +75,7 @@ class SimulatedAnnealing(IterativeTSPSolver):
 
         self.temperature = self.cooling_schedule(self.temperature)
 
-        return StepReport(iteration=self.iteration, cost=self.best_cost, improved=improved)
+        return StepReport(iteration=self.iteration, best_cost=self.best_cost, current_cost=self.current_cost, improved=improved)
 
     def get_route(self) -> List[int]:
         return self.best_route
