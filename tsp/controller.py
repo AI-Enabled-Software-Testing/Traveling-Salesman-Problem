@@ -26,70 +26,40 @@ def calculate_distance(city1: City, city2: City, edge_weight_type: str = "EUC_2D
     else:
         raise NotImplementedError(f"Edge weight type {edge_weight_type} not supported")
 
-def tour_distance(tour: List[int], instance: TSPInstance) -> float:
+def tour_distance(tour: List[City], instance: TSPInstance) -> float:
     """Calculate total distance of a tour."""
     if len(tour) != len(instance.cities):
         raise ValueError("Tour must visit all cities exactly once")
     
     total_distance = 0.0
     for i in range(len(tour)):
-        current_city = instance.cities[tour[i]]
-        next_city = instance.cities[tour[(i + 1) % len(tour)]]  # Return to start
+        current_city = tour[i]
+        next_city = tour[(i + 1) % len(tour)]  # Return to start
         total_distance += calculate_distance(current_city, next_city, instance.edge_weight_type)
-    
     return total_distance
 
-def fitness_minimize_distance(tour: List[int], instance: TSPInstance) -> float:
+def fitness_minimize_distance(tour: List[City], instance: TSPInstance) -> float:
     """Fitness function that minimizes tour distance (lower is better)."""
     return tour_distance(tour, instance)
 
-def fitness_maximize_inverse_distance(tour: List[int], instance: TSPInstance) -> float:
+def fitness_maximize_inverse_distance(tour: List[City], instance: TSPInstance) -> float:
     """Fitness function that maximizes 1/distance (higher is better)."""
     distance = tour_distance(tour, instance)
-    return 1.0 / (distance + 1e-6)  # Add small epsilon to avoid division by zero
+    if distance == 0:
+        distance = 1e-6  # Prevent division by zero
+    return 1.0 / distance  # Add small epsilon to avoid division by zero
+
+def calculate_fitness(tour: List[City], instance: TSPInstance, maximize: bool = False) -> float:
+    """Calculate fitness of a tour based on whether to maximize or minimize distance."""
+    if maximize:
+        return fitness_maximize_inverse_distance(tour, instance)
+    else:
+        return fitness_minimize_distance(tour, instance)
 
 # ###########################
 # Normalized Fitness Function
 # ###########################
 
-def fitness_normalized(tour: List[int], instance: TSPInstance, reference_distance: float = None) -> float:
-    """Normalized fitness function (0-1 scale, higher is better)."""
-    distance = tour_distance(tour, instance)
-    
-    if reference_distance is None:
-        # Use a simple heuristic as reference (e.g., nearest neighbor approximation)
-        reference_distance = estimate_reference_distance(instance)
-    
-    # Higher fitness for shorter distances
-    return max(0, (reference_distance - distance) / reference_distance)
-
-def estimate_reference_distance(instance: TSPInstance) -> float:
-    """Estimate a reference distance using nearest neighbor heuristic."""
-    # Simple nearest neighbor starting from city 0
-    unvisited = set(range(1, len(instance.cities)))
-    current = 0
-    total_distance = 0.0
-    
-    while unvisited:
-        nearest = min(
-            unvisited, key=lambda city: calculate_distance(
-                        instance.cities[current], 
-                        instance.cities[city], 
-                        instance.edge_weight_type
-                    )
-            )
-        total_distance += calculate_distance(
-            instance.cities[current], 
-            instance.cities[nearest], 
-            instance.edge_weight_type
-        )
-        current = nearest
-        unvisited.remove(nearest)
-    
-    # Return to start
-    total_distance += calculate_distance(
-        instance.cities[current], 
-        instance.cities[0], 
-        instance.edge_weight_type
-    )
-    return total_distance
+def normalize(fitness: float) -> float:
+    """Normalize fitness to [0, 1] range."""
+    return 1 / (1 + fitness)

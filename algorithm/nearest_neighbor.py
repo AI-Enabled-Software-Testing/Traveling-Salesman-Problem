@@ -31,7 +31,7 @@ class NearestNeighbor(IterativeTSPSolver):
         self.iteration += 1
         improved = False
         if self.unvisited:
-            last = self.route[-1]
+            last = self.route[-1] # FIFO
             # Pick nearest unvisited
             next_city = min(self.unvisited, key=lambda j: self.instance.distance(last, j))
             self.unvisited.remove(next_city)
