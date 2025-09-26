@@ -31,13 +31,13 @@ class RandomSolver(IterativeTSPSolver):
         n = len(self.instance.cities)
         candidate = list(range(n))
         self.rng.shuffle(candidate)
-        cost = self.instance.route_cost(candidate)
+        current_cost = self.instance.route_cost(candidate)
         improved = False
-        if cost < self.best_cost:
-            self.best_cost = cost
+        if current_cost < self.best_cost:
+            self.best_cost = current_cost
             self.best_route = candidate
             improved = True
-        return StepReport(iteration=self.iteration, cost=self.best_cost, improved=improved)
+        return StepReport(iteration=self.iteration, best_cost=self.best_cost, current_cost=current_cost, improved=improved)
 
     def get_route(self) -> List[int]:
         return self.best_route
