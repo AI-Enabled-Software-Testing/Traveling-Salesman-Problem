@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import List
-from controller import calculate_distance, tour_distance, calculate_fitness
 import math
 
 
@@ -19,6 +18,7 @@ class TSPInstance:
 
     def distance(self, i: int = None, j: int = None, alg: str = None) -> float:
         """Calculate distance between ONLY TWO cities by their indices."""
+        from .controller import calculate_distance, tour_distance
         match alg:
             case "EUC_2D" | "MAN_2D" | "ATT":
                 if i is None or j is None:
@@ -35,6 +35,7 @@ class TSPInstance:
                 return math.hypot(dx, dy)
 
     def route_cost(self, route: List[int], norm: str = None) -> float:
+        from .controller import calculate_fitness
         match norm:
             case "max":
                 return calculate_fitness([self.cities[i] for i in route], self, maximize=True)
