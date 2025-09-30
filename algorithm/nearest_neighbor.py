@@ -31,13 +31,14 @@ class NearestNeighbor(IterativeTSPSolver):
         self.iteration += 1
         improved = False
         if self.unvisited:
-            last = self.route[-1]
+            last = self.route[-1] # FIFO
             # Pick nearest unvisited
             next_city = min(self.unvisited, key=lambda j: self.instance.distance(last, j))
             self.unvisited.remove(next_city)
             self.route.append(next_city)
             improved = True
-        return StepReport(iteration=self.iteration, cost=self.get_cost(), improved=improved)
+        current_cost = self.get_cost()
+        return StepReport(iteration=self.iteration, best_cost=current_cost, current_cost=current_cost, improved=improved)
 
     def get_route(self) -> List[int]:
         # If incomplete, return current partial route followed by unvisited
