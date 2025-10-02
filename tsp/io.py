@@ -5,12 +5,12 @@ from .model import City, TSPInstance
 
 
 def parse_tsplib_tsp(path: Path) -> TSPInstance:
+    """Parse a TSPLIB format .tsp file (EUC_2D only)."""
     name = path.stem
     cities: List[City] = []
     in_coords = False
-    edge_weight_type = "EUC_2D"  # Default value
-    dimension = 0 # For validation
-    city_count = 0 # Initialize
+    dimension = 0  # For validation
+    city_count = 0  # Track parsed cities
     with open(path, 'r') as f:
         for line in f:
             line = line.strip()
@@ -21,7 +21,6 @@ def parse_tsplib_tsp(path: Path) -> TSPInstance:
                     name = line.split(":", 1)[1].strip()
                 except Exception:
                     pass
-            # ########################
             # Validation
             if line.upper().startswith("TYPE"):
                 if "TSP" not in line.upper():
@@ -31,17 +30,12 @@ def parse_tsplib_tsp(path: Path) -> TSPInstance:
                     dimension = int(line.split(":", 1)[1].strip())
                 except Exception:
                     pass
-            # ########################
-            if line.upper().startswith("EDGE_WEIGHT_TYPE"):
-                try:
-                    edge_weight_type = line.split(":", 1)[1].strip()
-                except Exception:
-                    pass
             if line.upper().startswith("NODE_COORD_SECTION"):
                 in_coords = True
                 continue
             if line.upper().startswith("EOF"):
-                assert city_count == dimension, f"Expected {dimension} cities, but parsed {city_count} in {path}"
+                if dimension > 0:
+                    assert city_count == dimension, f"Expected {dimension} cities, but parsed {city_count} in {path}"
                 break
             if in_coords:
                 parts = line.split()
@@ -51,10 +45,9 @@ def parse_tsplib_tsp(path: Path) -> TSPInstance:
                     y = float(parts[2])
                     # TSPLIB ids are 1-based; store as 0-based internally
                     cities.append(City(id=city_id - 1, x=x, y=y))
-                    # increment found cities
                     city_count += 1
     if not cities:
         raise ValueError(f"No cities parsed from {path}")
-    return TSPInstance(name=name, cities=cities, edge_weight_type=edge_weight_type)
+    return TSPInstance(name=name, cities=cities)
 
 

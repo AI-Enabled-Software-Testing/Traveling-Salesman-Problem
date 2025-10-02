@@ -1,7 +1,10 @@
 from tsp.io import parse_tsplib_tsp
 from pathlib import Path
 import time
+import logging
 from constants import MAX_SECONDS, MAX_ITERATIONS
+
+logger = logging.getLogger(__name__)
 
 # Dataset should already been downloaded, 
 # if not, run `setup_dataset.py` first.
@@ -10,13 +13,13 @@ def find_optimal_tour(tsp_path: str | Path):
     if isinstance(tsp_path, str):
         tsp_path = Path(tsp_path)
     instance = parse_tsplib_tsp(tsp_path)
-    print(f"Loaded {instance.name} with {len(instance.cities)} cities")
+    logger.info(f"Loaded {instance.name} with {len(instance.cities)} cities")
 
     # Check for optimal tour file
     opt_tour_path = Path(f"dataset/{instance.name}.opt.tour")
     optimal_cost = None
     if opt_tour_path.exists():
-        print(f"Found optimal tour file: {opt_tour_path}")
+        logger.info(f"Found optimal tour file: {opt_tour_path}")
         # Parse optimal tour (simple format: just city indices)
         with open(opt_tour_path, "r") as f:
             lines = f.readlines()
@@ -41,11 +44,11 @@ def find_optimal_tour(tsp_path: str | Path):
         
         if tour:
             optimal_cost = instance.route_cost(tour)
-            print(f"Optimal cost: {optimal_cost:.2f}")
+            logger.info(f"Optimal cost: {optimal_cost:.2f}")
         else:
-            print("Could not parse optimal tour")
+            logger.warning("Could not parse optimal tour")
     else:
-        print("No optimal tour file found")
+        logger.info("No optimal tour file found")
     
     return instance, optimal_cost
 
