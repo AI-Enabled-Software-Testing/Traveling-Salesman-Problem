@@ -6,13 +6,16 @@ Downloads the TSPLIB95 dataset and filters for TSP instances
 with Euclidean 2D edge weights, extracting them to a local dataset directory.
 """
 
-import sys
 import tarfile
 import gzip
 import requests
 import re
 import io
+import logging
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
 
 SEP = "\n" + "=" * 40 + "\n"
 
@@ -22,22 +25,22 @@ def main():
     DATASET_URL = "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/ALL_tsp.tar.gz"
     DATASET_DIR = Path("dataset")
     
-    print("TSP Dataset Setup Script")
+    logger.info("TSP Dataset Setup Script")
     print(SEP)
     
     # Create dataset directory
     DATASET_DIR.mkdir(exist_ok=True)
     
     try:
-        print(f"Downloading {DATASET_URL}...")
+        logger.info(f"Downloading {DATASET_URL}...")
         response = requests.get(DATASET_URL)
         response.raise_for_status()
-        print("Download completed")
+        logger.info("Download completed")
         
         # Load tar.gz into memory
         tar_bytes = io.BytesIO(response.content)
         
-        print("Processing files...")
+        logger.info("Processing files...")
         extracted_files = []
         
         with tarfile.open(fileobj=tar_bytes, mode='r:gz') as tar:
@@ -66,7 +69,7 @@ def main():
                         valid_tsp_names.add(base_name)
                         
                 except Exception as e:
-                    print(f"Failed to process {gz_member.name}: {e}")
+                    logger.error(f"Failed to process {gz_member.name}: {e}")
             
             # Second pass: Collect tour files
             for gz_member in tour_gz_files:
@@ -87,25 +90,25 @@ def main():
                         extracted_files.append(output_file)
 
                 except Exception as e:
-                    print(f"Failed to process {gz_member.name}: {e}")
+                    logger.error(f"Failed to process {gz_member.name}: {e}")
     
     except Exception as e:
-        print(f"Error processing dataset: {e}")
+        logger.error(f"Error processing dataset: {e}")
         raise e
     
     print(SEP)
-    print(f"Extracted files to: {DATASET_DIR}")
+    logger.info(f"Extracted files to: {DATASET_DIR}")
     
     tsp_files = [f for f in extracted_files if f.name.endswith('.tsp')]
     tour_files = [f for f in extracted_files if f.name.endswith('.opt.tour')]
     
-    print(f"TSP files ({len(tsp_files)}):")
+    logger.info(f"TSP files ({len(tsp_files)}):")
     for file in sorted(tsp_files):
-        print(f"  - {file.name}")
+        logger.info(f"  - {file.name}")
     
-    print(f"Tour files ({len(tour_files)}):")
+    logger.info(f"Tour files ({len(tour_files)}):")
     for file in sorted(tour_files):
-        print(f"  - {file.name}")
+        logger.info(f"  - {file.name}")
 
         
 if __name__ == "__main__":

@@ -1,8 +1,12 @@
 import random
+import logging
 from constants import RANDOM_SEED
 
+logging.basicConfig(level=logging.WARNING, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger(__name__)
+
 def main():
-    print("Hello from traveling-salesman-problem!")
+    logger.info("TSP Solver")
     # Setup
     random.seed(RANDOM_SEED)
 
