@@ -1,7 +1,7 @@
 from tsp.io import parse_tsplib_tsp
 from pathlib import Path
 import time
-from constants import *
+from constants import MAX_SECONDS, MAX_ITERATIONS
 
 # Dataset should already been downloaded, 
 # if not, run `setup_dataset.py` first.

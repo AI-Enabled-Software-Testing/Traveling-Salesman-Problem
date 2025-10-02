@@ -43,7 +43,6 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
 
     def step(self) -> StepReport:
         self.iteration += 1
-        n = len(self.instance.cities)
 
         # Evaluate Improvement
         improved = False
