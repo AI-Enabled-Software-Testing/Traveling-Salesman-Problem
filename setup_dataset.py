@@ -91,7 +91,7 @@ def main():
     
     except Exception as e:
         print(f"Error processing dataset: {e}")
-        sys.exit(1)
+        raise e
     
     print(SEP)
     print(f"Extracted files to: {DATASET_DIR}")
