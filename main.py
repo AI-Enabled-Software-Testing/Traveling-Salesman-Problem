@@ -225,8 +225,8 @@ def main(algorithm: str = ALGORITHM):
         for city in best_route:
             print(city)
         # Print Routes to CSV
-        df = pd.DataFrame(best_route, columns=["City"])
-        df.to_csv(output_csv, index=False)
+        df = pd.DataFrame(best_route)
+        df.to_csv(output_csv, index=False, header=False)
 
     else:
         logger.debug("No route found")

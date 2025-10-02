@@ -312,18 +312,31 @@ class TestCSVOutput:
             mock_dirname.return_value = str(tmp_path)
             mock_abspath.return_value = str(tmp_path / "main.py")
             
-            # Mock pool results with known route
+            # Mock pool results with known route - ensure consistent best route
             test_route = [0, 1, 2, 3]
-            mock_run_result = {
-                'best_costs': [120.0, 110.0, 105.0],
-                'best_route': test_route,
+            
+            # Create results where time-based has worse cost than iteration-based
+            time_result = {
+                'best_costs': [200.0, 180.0, 150.0],
+                'best_route': [3, 2, 1, 0],  # Different route with higher cost
+                'times': [0.1, 0.2, 0.3],
+                'iterations': [1, 2, 3]
+            }
+            
+            iteration_result = {
+                'best_costs': [120.0, 110.0, 100.0],  # Lower cost = best
+                'best_route': test_route,  # This should be selected
                 'times': [0.1, 0.2, 0.3],
                 'iterations': [1, 2, 3]
             }
             
             mock_pool_instance = MagicMock()
             mock_pool.return_value.__enter__.return_value = mock_pool_instance
-            mock_pool_instance.map.return_value = [mock_run_result] * 10
+            # Return time-based results for first call, iteration-based for second
+            mock_pool_instance.map.side_effect = [
+                [time_result] * 10,      # Time-based runs
+                [iteration_result] * 10  # Iteration-based runs  
+            ]
             
             # Run main function
             with patch('sys.argv', ['main.py', 'test.tsp']):
@@ -332,18 +345,15 @@ class TestCSVOutput:
             # Verify CSV file was created
             assert test_csv_path.exists(), "CSV file should be created"
             
-            # Verify CSV content
+            # Verify CSV content (headerless format)
             with open(test_csv_path, 'r', newline='') as csvfile:
-                reader = csv.DictReader(csvfile)
+                reader = csv.reader(csvfile)
                 rows = list(reader)
                 
-                # Check header
-                assert 'City' in reader.fieldnames, "CSV should have 'City' column"
-                
-                # Check content
-                assert len(rows) == len(test_route), f"CSV should have {len(test_route)} rows"
+                # Check content - should match the best route from iteration results
+                assert len(rows) == len(test_route), f"CSV should have {len(test_route)} rows, got {len(rows)}. Content: {rows}"
                 for i, row in enumerate(rows):
-                    assert int(row['City']) == test_route[i], f"Row {i} should contain city {test_route[i]}"
+                    assert int(row[0]) == test_route[i], f"Row {i} should contain city {test_route[i]}, got {row[0]}"
     
     def test_csv_content_validation(self, tmp_path):
         """Test that CSV contains valid route data and format."""
@@ -377,10 +387,21 @@ class TestCSVOutput:
             mock_dirname.return_value = str(tmp_path)
             mock_abspath.return_value = str(tmp_path / "main.py")
             
-            # Use a simple consistent mock result
-            mock_run_result = {
+            # Create controlled results
+            expected_route = [0, 1, 2, 3, 4]
+            
+            # Time-based result (higher cost)
+            time_result = {
+                'best_costs': [200.0, 150.0, 120.0],
+                'best_route': [4, 3, 2, 1, 0],
+                'times': [0.1, 0.2, 0.3],
+                'iterations': [1, 2, 3]
+            }
+            
+            # Iteration-based result (lower cost, should be selected)
+            iteration_result = {
                 'best_costs': [150.0, 120.0, 100.0, 80.0],
-                'best_route': [0, 1, 2, 3, 4],
+                'best_route': expected_route,
                 'times': [0.1, 0.2, 0.3, 0.4],
                 'iterations': [1, 2, 3, 4],
                 'iters': [1, 2, 3, 4]
@@ -388,7 +409,10 @@ class TestCSVOutput:
             
             mock_pool_instance = MagicMock()
             mock_pool.return_value.__enter__.return_value = mock_pool_instance
-            mock_pool_instance.map.return_value = [mock_run_result] * 10
+            mock_pool_instance.map.side_effect = [
+                [time_result] * 10,        # Time-based runs
+                [iteration_result] * 10    # Iteration-based runs
+            ]
             
             # Run main function
             with patch('sys.argv', ['main.py', 'test.tsp']):
@@ -397,22 +421,20 @@ class TestCSVOutput:
             # Verify CSV file exists and has correct content
             assert test_csv_path.exists(), "CSV file should be created"
             
-            # Read and validate CSV content
+            # Read and validate CSV content (headerless format)
             with open(test_csv_path, 'r', newline='') as csvfile:
                 content = csvfile.read()
                 
-                # Check that CSV has header
-                assert content.startswith('City'), "CSV should start with 'City' header"
-                
                 # Parse CSV content
                 csvfile.seek(0)
-                reader = csv.DictReader(csvfile)
-                route_data = [int(row['City']) for row in reader]
+                reader = csv.reader(csvfile)
+                route_data = [int(row[0]) for row in reader]
                 
                 # Verify the route structure (should have all cities)
-                assert len(route_data) == 5, f"Expected 5 cities, got {len(route_data)}"
+                assert len(route_data) == 5, f"Expected 5 cities, got {len(route_data)}. Content: {route_data}"
                 assert all(city in [0, 1, 2, 3, 4] for city in route_data), "All cities should be valid city IDs"
                 assert len(set(route_data)) == 5, "All cities should be unique (valid TSP route)"
+                assert route_data == expected_route, f"Expected route {expected_route}, got {route_data}"
 
 
 class TestIntegrationSmokeTests:
