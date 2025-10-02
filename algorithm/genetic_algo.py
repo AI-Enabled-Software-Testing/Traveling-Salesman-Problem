@@ -10,7 +10,7 @@ from .base import IterativeTSPSolver, StepReport
 class GeneticAlgorithmSolver(IterativeTSPSolver):
     """Genetic Algorithm for TSP."""
 
-    def __init__(self, instance: TSPInstance, seed: int | None = None, population_size: int = 100, crossover_rate: float = 0.7, mutation_rate: float = 0.01, num_parents: int = 2, num_child: int = 2):
+    def __init__(self, instance: TSPInstance, seed: int | float | None = None, population_size: int = 100, crossover_rate: float = 0.7, mutation_rate: float = 0.01, num_parents: int = 2, num_child: int = 2):
         self.instance = instance
         self.rng = random.Random(seed)
         self.best_route: List[int] = []

@@ -17,7 +17,7 @@ class SimulatedAnnealing(IterativeTSPSolver):
         instance: TSPInstance,
         start_temperature: float,
         cooling_schedule: Callable[[float], float],
-        seed: int | None = None,
+        seed: int | float | None = None,
     ):
         self.instance = instance
         self.start_temperature = start_temperature
