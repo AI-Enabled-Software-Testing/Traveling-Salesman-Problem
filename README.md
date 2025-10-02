@@ -1,4 +1,4 @@
-# Heuristic TSP Solver for CSI 5137A Assignment 1
+# Heuristic TSP Solver for CSI 5186 Assignment 1
 
 This repository contains the implementation of a Travelling Salesman Problem (TSP) solver for the CSI 5137A – AI-enabled Software Verification and Testing course, Assignment 1, Autumn 2025. 
 
