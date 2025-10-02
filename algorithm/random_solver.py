@@ -10,7 +10,7 @@ from .base import IterativeTSPSolver, StepReport
 class RandomSolver(IterativeTSPSolver):
     """Each iteration samples a new random permutation; keeps track of the best seen."""
 
-    def __init__(self, instance: TSPInstance, seed: int | None = None):
+    def __init__(self, instance: TSPInstance, seed: int | float | None = None):
         self.instance = instance
         self.rng = random.Random(seed)
         self.best_route: List[int] = []
