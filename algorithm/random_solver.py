@@ -16,6 +16,7 @@ class RandomSolver(IterativeTSPSolver):
         self.best_route: List[int] = []
         self.best_cost: float = float("inf")
         self.iteration = 0
+        self.candidate_route: List[int] = []  
 
     def initialize(self, route: List[int]) -> None:
         n = len(self.instance.cities)
@@ -23,19 +24,19 @@ class RandomSolver(IterativeTSPSolver):
             self.best_route = list(route)
         else:
             self.best_route = list(range(n))
+            self.rng.shuffle(self.best_route)
         self.best_cost = self.instance.route_cost(self.best_route)
         self.iteration = 0
+        self.candidate_route = list(range(n))
 
     def step(self) -> StepReport:
         self.iteration += 1
-        n = len(self.instance.cities)
-        candidate = list(range(n))
-        self.rng.shuffle(candidate)
-        current_cost = self.instance.route_cost(candidate)
+        self.rng.shuffle(self.candidate_route)
+        current_cost = self.instance.route_cost(self.candidate_route)
         improved = False
         if current_cost < self.best_cost:
             self.best_cost = current_cost
-            self.best_route = candidate
+            self.best_route = list(self.candidate_route) 
             improved = True
         return StepReport(iteration=self.iteration, best_cost=self.best_cost, current_cost=current_cost, improved=improved)
 
