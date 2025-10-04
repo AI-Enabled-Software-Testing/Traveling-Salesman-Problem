@@ -23,6 +23,7 @@ class RandomSolver(IterativeTSPSolver):
             self.best_route = list(route)
         else:
             self.best_route = list(range(n))
+            self.rng.shuffle(self.best_route)
         self.best_cost = self.instance.route_cost(self.best_route)
         self.iteration = 0
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from typing import List
 
 from tsp.model import TSPInstance
@@ -12,19 +13,22 @@ class NearestNeighbor(IterativeTSPSolver):
     Each step adds one more nearest unvisited city to the route until complete.
     """
 
-    def __init__(self, instance: TSPInstance):
+    def __init__(self, instance: TSPInstance, seed: int | float | None = None):
         self.instance = instance
+        self.rng = random.Random(seed)
         self.route: List[int] = []
         self.unvisited: List[int] = []
         self.iteration = 0
 
-    def initialize(self, route: List[int]) -> None:
-        # Start from provided first city; if empty, start from city 0
-        if route:
+    def initialize(self, route: list[int] | None = None) -> None:
+        n = len(self.instance.cities)
+        if route and len(route) > 0:
             self.route = [route[0]]
+            self.unvisited = [i for i in range(n) if i not in self.route]
         else:
-            self.route = [0]
-        self.unvisited = [i for i in range(len(self.instance.cities)) if i not in self.route]
+            start_city = self.rng.randint(0, n - 1)
+            self.route = [start_city]
+            self.unvisited = [i for i in range(n) if i != start_city]
         self.iteration = 0
 
     def step(self) -> StepReport:
