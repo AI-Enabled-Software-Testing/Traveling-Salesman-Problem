@@ -33,6 +33,7 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
             self.best_route = list(route)
         else:
             self.best_route = list(range(n))
+            self.rng.shuffle(self.best_route)
         
         self.population = []
         # Preserve OrderedDict type for LRU behavior
