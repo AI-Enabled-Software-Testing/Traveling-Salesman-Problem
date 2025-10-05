@@ -75,12 +75,6 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         return self.fitness_cache[route_tuple]
 
     def step(self) -> StepReport:
-        """
-        Performs one full generation of the genetic algorithm.
-        
-        This includes fitness evaluation, selection, crossover, and mutation
-        to create a new population from the current one.
-        """
         self.iteration += 1
 
         # Evaluate fitness for each individual in the population
