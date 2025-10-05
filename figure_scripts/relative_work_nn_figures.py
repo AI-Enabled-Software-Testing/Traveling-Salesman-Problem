@@ -5,22 +5,12 @@ import logging
 from tqdm import tqdm
 import numpy as np
 from constants import CALIBRATION_TIME, MAX_NORMALIZED_STEPS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
-from .common import load_tsp_instance, create_solvers, create_plot
+from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, align_series, save_figure, ALGO_COLORS, add_optimal_line
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from algorithm.nearest_neighbor import NearestNeighbor
 from tsp.model import TSPInstance
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
-
-
-def get_nn_route(instance):
-    nn = NearestNeighbor(instance)
-    nn.initialize(None)
-    n_cities = len(instance.cities)
-    for _ in range(n_cities - 1):
-        nn.step()
-    return nn.get_route()
 
 
 def calibrate_steps_per_second(create_solver_func, initial_route=None, calibration_time=CALIBRATION_TIME):
@@ -56,11 +46,11 @@ def run_single_benchmark(create_solver_func, initial_route, work_factor, max_nor
 
 def worker_benchmark_nn(display_name, orig_key, work_factor):
     """Worker for parallel NN benchmarking - computes initial_route locally."""
-    from .common import load_tsp_instance
+    from figure_scripts.relative_work_nn_figures import run_single_benchmark
+    from .common import load_tsp_instance, create_solvers, get_nn_initial_route
     _, _, instance_data = load_tsp_instance()
     instance = TSPInstance(name=instance_data['name'], cities=instance_data['cities'])
-    initial_route = get_nn_route(instance)  # Compute locally
-    from .common import create_solvers
+    initial_route = get_nn_initial_route(instance)  # Compute locally
     solvers = create_solvers()
     create_func = solvers[orig_key]
     result = run_single_benchmark(create_func, initial_route, work_factor)
@@ -69,7 +59,7 @@ def worker_benchmark_nn(display_name, orig_key, work_factor):
 
 def main():
     instance, optimal_cost, instance_data = load_tsp_instance()
-    initial_route = get_nn_route(instance)
+    initial_route = get_nn_initial_route(instance)
     logger.info(f"Generating relative work figures for {instance_data['name']} (optimal: {optimal_cost:.2f}) with NN init")
     
     # Calibration phase (single run for speed)
@@ -85,27 +75,27 @@ def main():
     reference_steps_per_second = steps_per_second[reference_algo]
 
     logger.info(f"Reference algorithm (fastest): {reference_algo} with {reference_steps_per_second:.1f} steps/sec")
-
+    
     # Calculate normalization factors (work per step relative to reference algorithm)
     work_per_step = {}
     for algo_name in solvers:
         work_per_step[algo_name] = reference_steps_per_second / steps_per_second[algo_name]
-
+    
     logger.info(f"Work per step: {work_per_step}")
-
+    
     algo_configs = [
         ('SA_NN', 'SA_random'),
         ('GA_NN', 'GA_random')
     ]
-
+    
     args_list = []
     for display_name, orig_key in algo_configs:
         work_factor = work_per_step[orig_key]
         for _ in range(N_RUNS):
             args_list.append((display_name, orig_key, work_factor))
-
+    
     logger.info(f"Running {len(args_list)} trials {'in parallel' if PARALLEL_RUNS else 'sequentially'}")
-
+    
     if PARALLEL_RUNS:
         with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
             futures = [executor.submit(worker_benchmark_nn, *arg) for arg in args_list]
@@ -118,19 +108,17 @@ def main():
             create_func = solvers[orig_key]
             result = run_single_benchmark(create_func, initial_route, work_factor)
             all_results_list.append((display_name, result))
-
+    
     all_results = {display: [] for display, _ in algo_configs}
     for display_name, result in all_results_list:
         all_results[display_name].append(result)
-
+    
     # Plot
-    _, ax = create_plot(
+    fig, ax = create_plot(
         "Algorithm Performance vs Normalized Work with NN init",
         f"Normalized Steps (Reference: {reference_algo})",
         "Best Cost"
     )
-    
-    colors = {'SA_NN': 'blue', 'GA_NN': 'red'}
     
     num_points = 100
     common_norm_steps = np.linspace(1, MAX_NORMALIZED_STEPS, num_points)
@@ -140,37 +128,29 @@ def main():
             continue
         
         # Interpolate each run to common normalized steps grid
-        aligned_best = []
-        for run_data in algo_runs:
-            norm_steps = [point[0] for point in run_data]
-            costs = [point[1] for point in run_data]
-            if len(norm_steps) > 0:
-                interp_cost = np.interp(common_norm_steps, norm_steps, costs)
-                aligned_best.append(interp_cost)
+        x_lists = [[point[0] for point in run_data] for run_data in algo_runs]
+        y_lists = [[point[1] for point in run_data] for run_data in algo_runs]
+        mean_best, std_best = align_series(x_lists, y_lists, common_norm_steps)
         
-        if not aligned_best:
+        if len(mean_best) == 0:
             continue
         
-        aligned_best = np.array(aligned_best)
-        
-        mean_best = np.mean(aligned_best, axis=0)
-        std_best = np.std(aligned_best, axis=0)
+        base_algo = algo_name.split('_')[0]
+        color = ALGO_COLORS[base_algo]
         
         ax.plot(common_norm_steps, mean_best, label=f"{algo_name}", 
-                color=colors[algo_name], linewidth=2)
+                color=color, linewidth=2)
         ax.fill_between(common_norm_steps, mean_best - std_best, mean_best + std_best, 
-                        alpha=0.2, color=colors[algo_name])
+                        alpha=0.2, color=color)
         
         final_mean = mean_best[-1]
         final_std = std_best[-1]
         logger.info(f"{algo_name}: Final mean cost {final_mean:.2f} ± {final_std:.2f}")
-
-    ax.axhline(y=optimal_cost, color='green', linestyle=':', label='Optimal', alpha=0.7)
+    
+    add_optimal_line(ax, optimal_cost)
     ax.legend()
     
-    plt.tight_layout()
-    plt.savefig('figures/relative_work_nn_figures.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    save_figure(fig, 'figures/relative_work_nn_figures.png')
     logger.info("Saved figures/relative_work_nn_figures.png")
 
 

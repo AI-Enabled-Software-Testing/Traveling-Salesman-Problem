@@ -2,12 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
-from .common import load_tsp_instance, create_solvers
+from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, compute_nn_baseline, run_parallel_trials, save_figure, ALGO_COLORS
 from util import run_algorithm_with_timing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 from tsp.model import TSPInstance
-from algorithm.nearest_neighbor import NearestNeighbor
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
@@ -21,12 +20,7 @@ def run_single_box_trial(args):
         init_route = None
         if use_nn:
             instance = TSPInstance(name=instance_data['name'], cities=instance_data['cities'])
-            nn = NearestNeighbor(instance)
-            nn.initialize(None)
-            n_cities = len(instance.cities)
-            for _ in range(n_cities - 1):
-                nn.step()
-            init_route = nn.get_route()
+            init_route = get_nn_initial_route(instance)
     else:
         raise ValueError(f"Unknown algorithm: {name}")
     
@@ -50,15 +44,7 @@ def main():
     
     logger.info(f"Running {len(args_list)} trials {'in parallel' if PARALLEL_RUNS else 'sequentially'}")
     
-    if PARALLEL_RUNS:
-        with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
-            futures = [executor.submit(run_single_box_trial, arg) for arg in args_list]
-            all_final_costs = [f.result() for f in tqdm(as_completed(futures), total=len(args_list), desc="Running trials")]
-    else:
-        all_final_costs = []
-        for arg in tqdm(args_list, desc="Running trials"):
-            final_cost = run_single_box_trial(arg)
-            all_final_costs.append(final_cost)
+    all_final_costs = run_parallel_trials(run_single_box_trial, args_list, desc="Running trials")
     
     # Group by algorithm
     costs_by_algo = {name: [] for name in algorithms}
@@ -78,28 +64,18 @@ def main():
     
     # Compute NN baseline
     instance = TSPInstance(name=instance_data['name'], cities=instance_data['cities'])
-    nn = NearestNeighbor(instance)
-    nn.initialize(None)
-    n_cities = len(instance.cities)
-    for _ in range(n_cities - 1):
-        nn.step()
-    nn_cost = nn.get_cost()
+    nn_cost = compute_nn_baseline(instance)
     nn_gap = ((nn_cost / optimal_cost - 1) * 100) if optimal_cost else 0
     logger.info("Nearest Neighbor")
-
+    
     # Plot box plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    _, ax = create_plot(f'Algorithm Performance Distribution (Final Costs after {MAX_SECONDS}s)', 'Algorithms', 'Gap to Optimal (%)')
     ax.boxplot([gaps_by_algo[name] for name in algorithms], tick_labels=algorithms)
-    ax.set_ylabel('Gap to Optimal (%)')
-    ax.set_title(f'Algorithm Performance Distribution (Final Costs after {MAX_SECONDS}s)')
     ax.axhline(y=0, color='green', linestyle=':', label='Optimal')
     ax.axhline(y=nn_gap, color='orange', linestyle='--', label=f'NN Baseline ({nn_gap:.1f}%)')
     ax.legend()
-    ax.grid(True, alpha=0.3)
     
-    plt.tight_layout()
-    plt.savefig('figures/box_plot_figures.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    save_figure(plt.gcf(), 'figures/box_plot_figures.png')
     logger.info("Saved figures/box_plot_figures.png")
 
 if __name__ == "__main__":

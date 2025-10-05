@@ -5,7 +5,7 @@ import logging
 from tqdm import tqdm
 import numpy as np
 from constants import CALIBRATION_TIME, MAX_NORMALIZED_STEPS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
-from .common import load_tsp_instance, create_solvers, create_plot
+from .common import load_tsp_instance, create_solvers, create_plot, align_series, save_figure, ALGO_COLORS, add_optimal_line
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -102,13 +102,11 @@ def main():
     for algo_name, result in all_results_list:
         all_results[algo_name].append(result)
 
-    _, ax = create_plot(
+    fig, ax = create_plot(
         "Algorithm Performance vs Normalized Work",
         f"Normalized Steps (Reference: {reference_algo})",
         "Best Cost"
     )
-    
-    colors = {'SA_random': 'blue', 'GA_random': 'red'}
     
     num_points = 100
     common_norm_steps = np.linspace(1, MAX_NORMALIZED_STEPS, num_points)
@@ -118,36 +116,29 @@ def main():
             continue
         
         # Interpolate each run to common normalized steps grid
-        aligned_best = []
-        for run_data in algo_runs:
-            norm_steps = [point[0] for point in run_data]
-            costs = [point[1] for point in run_data]
-            if len(norm_steps) > 0:
-                interp_cost = np.interp(common_norm_steps, norm_steps, costs)
-                aligned_best.append(interp_cost)
+        x_lists = [[point[0] for point in run_data] for run_data in algo_runs]
+        y_lists = [[point[1] for point in run_data] for run_data in algo_runs]
+        mean_best, std_best = align_series(x_lists, y_lists, common_norm_steps)
         
-        if not aligned_best:
+        if len(mean_best) == 0:
             continue
         
-        aligned_best = np.array(aligned_best)
-        
-        mean_best = np.mean(aligned_best, axis=0)
-        std_best = np.std(aligned_best, axis=0)
+        base_algo = algo_name.split('_')[0]
+        color = ALGO_COLORS[base_algo]
         
         ax.plot(common_norm_steps, mean_best, label=f"{algo_name}", 
-                color=colors[algo_name], linewidth=2)
+                color=color, linewidth=2)
         ax.fill_between(common_norm_steps, mean_best - std_best, mean_best + std_best, 
-                        alpha=0.2, color=colors[algo_name])
+                        alpha=0.2, color=color)
         
         final_mean = mean_best[-1]
         final_std = std_best[-1]
         logger.info(f"{algo_name}: Final mean cost {final_mean:.2f} ± {final_std:.2f}")
-
-    ax.axhline(y=optimal_cost, color='green', linestyle=':', label='Optimal', alpha=0.7)
+    
+    add_optimal_line(ax, optimal_cost)
     ax.legend()
     
-    plt.tight_layout()
-    plt.savefig('figures/relative_work_figures.png', dpi=300, bbox_inches='tight')
+    save_figure(fig, 'figures/relative_work_figures.png')
     logger.info("Saved figures/relative_work_figures.png")
 
 
