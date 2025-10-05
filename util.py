@@ -2,8 +2,7 @@ from tsp.io import parse_tsplib_tsp
 from pathlib import Path
 import time
 import logging
-import random
-from constants import MAX_SECONDS, MAX_ITERATIONS, COOLING_RATE, POPULATION_SIZE, MUTATION_RATE, CROSSOVER_RATE, ELITISM_COUNT, NUM_PARENTS, NUM_CHILD
+from constants import MAX_SECONDS, MAX_ITERATIONS, COOLING_RATE, POPULATION_SIZE, MUTATION_RATE, CROSSOVER_RATE, ELITISM_COUNT
 
 # Import algorithms
 from algorithm.nearest_neighbor import NearestNeighbor
@@ -14,8 +13,6 @@ from algorithm.random_solver import RandomSolver
 logger = logging.getLogger(__name__)
 
 def setup_algorithm(alg_name: str, instance):
-    RANDOM_SEED = time.time() # For variability in real runs
-    random.seed(RANDOM_SEED)
     # Algorithm Specific Setup
     init_route = None
     match alg_name:
@@ -25,7 +22,6 @@ def setup_algorithm(alg_name: str, instance):
                 instance, 
                 INITIAL_TEMP, 
                 exponential_cooling(COOLING_RATE), # Cooling Schedule 
-                seed=RANDOM_SEED
             )
         case "SimulatedAnnealing_NearestNeighbor":
             INITIAL_TEMP = 100
@@ -34,7 +30,6 @@ def setup_algorithm(alg_name: str, instance):
                 instance, 
                 INITIAL_TEMP, 
                 exponential_cooling(COOLING_RATE), # Cooling Schedule 
-                seed=RANDOM_SEED
             )
         case "GeneticAlgorithm_NearestNeighbor":
             solver = GeneticAlgorithmSolver(
@@ -43,14 +38,19 @@ def setup_algorithm(alg_name: str, instance):
                 mutation_rate=MUTATION_RATE,
                 crossover_rate=CROSSOVER_RATE,
                 elitism_count=ELITISM_COUNT,
-                num_parents=NUM_PARENTS,
-                num_child=NUM_CHILD,
-                seed=RANDOM_SEED
+            )
+        case "GeneticAlgorithm":
+            solver = GeneticAlgorithmSolver(
+                instance, 
+                population_size=POPULATION_SIZE,
+                mutation_rate=MUTATION_RATE,
+                crossover_rate=CROSSOVER_RATE,
+                elitism_count=ELITISM_COUNT,
             )
         case "Baseline_Random":
-            solver = RandomSolver(instance, seed=RANDOM_SEED)
+            solver = RandomSolver(instance)
         case _:
-            logger.info(f" Only the following algorithm names are supported:\nSimulatedAnnealing_random, SimulatedAnnealing_NearestNeighbor, GeneticAlgorithm, Baseline_Random.")
+            logger.info(" Only the following algorithm names are supported:\nSimulatedAnnealing_random, SimulatedAnnealing_NearestNeighbor, GeneticAlgorithm, Baseline_Random.")
             raise ValueError(f"[ERROR] Unknown algorithm name: {alg_name}")
 
     # Update seed route for Nearest Neighbor based algorithms
@@ -76,13 +76,11 @@ def find_optimal_tour(tsp_path: str | Path):
     if isinstance(tsp_path, str):
         tsp_path = Path(tsp_path)
     instance = parse_tsplib_tsp(tsp_path)
-    logger.info(f"Loaded {instance.name} with {len(instance.cities)} cities")
 
     # Check for optimal tour file
     opt_tour_path = Path(f"dataset/{instance.name}.opt.tour")
     optimal_cost = None
     if opt_tour_path.exists():
-        logger.info(f"Found optimal tour file: {opt_tour_path}")
         # Parse optimal tour (simple format: just city indices)
         with open(opt_tour_path, "r") as f:
             lines = f.readlines()
@@ -107,11 +105,10 @@ def find_optimal_tour(tsp_path: str | Path):
         
         if tour:
             optimal_cost = instance.route_cost(tour)
-            logger.info(f"Optimal cost: {optimal_cost:.2f}")
         else:
             logger.warning("Could not parse optimal tour")
     else:
-        logger.info("No optimal tour file found")
+        logger.warning(f"No optimal tour file found for {instance.name}")
     
     return instance, optimal_cost
 
