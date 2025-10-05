@@ -11,7 +11,7 @@ from .base import IterativeTSPSolver, StepReport
 class GeneticAlgorithmSolver(IterativeTSPSolver):
     """Genetic Algorithm for TSP."""
 
-    def __init__(self, instance: TSPInstance, seed: int | float | None = None, population_size: int = 100, crossover_rate: float = 0.7, mutation_rate: float = 0.01, elitism_count: int = 2, num_parents: int = 2, num_child: int = 2):
+    def __init__(self, instance: TSPInstance, seed: int | float | None = None, population_size: int = 100, crossover_rate: float = 0.7, mutation_rate: float = 0.01, elitism_count: int = 2):
         self.instance = instance
         self.rng = random.Random(seed)
         self.best_route: List[int] = []
@@ -21,8 +21,6 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         self.population: List[List[int]] = []
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
-        self.num_parents = num_parents
-        self.num_child = num_child
         self.elitism_count = elitism_count
         self.fitness_cache = OrderedDict()
         self.max_cache_size = 2 * population_size
@@ -79,7 +77,7 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
     def step(self) -> StepReport:
         self.iteration += 1
 
-        # Evaluate fitness once per individual
+        # Evaluate fitness for each individual in the population
         population_with_fitness = [(ind, self._get_fitness(ind)) for ind in self.population]
         
         improved = False
@@ -93,27 +91,26 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         
         average_fitness = fitness_sum / len(self.population)
 
-        # Extract elite from already-sorted population
+
+        new_population = []
+
+        # Carry best individuals to the next generation
         if self.elitism_count > 0:
             population_with_fitness.sort(key=lambda x: x[1])
             elite = [ind for ind, _ in population_with_fitness[:self.elitism_count]]
-        else:
-            elite = []
+            new_population.extend(elite)
 
-        new_population = elite.copy()
+        # Selection, crossover, and mutation steps
         while len(new_population) < self.population_size:
-            selected_parents = []
-            for _ in range(self.num_parents):
-                parent = self.select_parent()
-                selected_parents.append(parent)
+            parent1 = self.select_parent()
+            parent2 = self.select_parent()
             
-            for _ in range(self.num_child):
-                if len(new_population) >= self.population_size:
-                    break
-                child = self.crossover(selected_parents)
-                if self.rng.random() < self.mutation_rate:
-                    child = self.mutate(child)
-                new_population.append(child)
+            child = self.crossover(parent1, parent2)
+            
+            if self.rng.random() < self.mutation_rate:
+                child = self.mutate(child)
+                
+            new_population.append(child)
             
         self.population = new_population
 
@@ -126,32 +123,23 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         return self.best_cost
     
     def select_parent(self) -> List[int]:
-        """Tournament selection with cached fitness."""
+        """Tournament selection."""
         tournament_size = max(2, self.population_size // 10)
         tournament = self.rng.sample(self.population, tournament_size)
         tournament.sort(key=lambda route: self._get_fitness(route))
         return tournament[0]
 
-    def crossover(self, parents: List[List[int]]) -> List[int]:
-        """Ordered Crossover (OX) for TSP. Returns a new child."""
-        # Get two parents
-        if len(parents) < 2:
-            return parents[0][:]
-        
-        parent1, parent2 = self.rng.sample(parents, 2)
-        
+    def crossover(self, parent1: List[int], parent2: List[int]) -> List[int]:
+        """Ordered Crossover (OX) for TSP."""
         if self.rng.random() > self.crossover_rate:
             return self.rng.choice([parent1, parent2])[:]
         
-        # Choose random crossover points
         n = len(parent1)
         start, end = sorted(self.rng.sample(range(n), 2))
         
-        # Copy a random segment from parent1
         child = [None] * n
         child[start:end] = parent1[start:end]
         
-        # Fill remaining positions with genes from parent2 in order
         fill_pos = 0
         for gene in parent2:
             if gene not in child:
@@ -159,7 +147,6 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
                     fill_pos += 1
                 child[fill_pos] = gene
         
-        assert None not in child
         return child
 
     def mutate(self, route: List[int]) -> List[int]:
@@ -167,6 +154,5 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         mutated_route = route[:]
         n = len(mutated_route)
         i, j = sorted(self.rng.sample(range(n), 2))
-        # Reverse the segment between i and j (2-opt move)
         mutated_route[i:j+1] = reversed(mutated_route[i:j+1])
         return mutated_route
