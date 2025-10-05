@@ -8,7 +8,6 @@ from constants import CALIBRATION_TIME, MAX_NORMALIZED_STEPS, N_RUNS, PARALLEL_R
 from .common import load_tsp_instance, create_solvers, create_plot
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -33,13 +32,7 @@ def run_single_benchmark(create_solver_func, initial_route, work_factor, max_nor
     solver = create_solver_func()
     solver.initialize(initial_route)
     
-    # Calculate max actual steps based on normalized steps
-    max_actual_steps = math.floor(max_normalized_steps / work_factor)
-    
-    # Ensure at least one step is run
-    if max_actual_steps < 1:
-        max_actual_steps = 1
-    
+    max_actual_steps = max(1, math.floor(max_normalized_steps / work_factor))
     results = []
     for step in range(max_actual_steps):
         solver.step()
@@ -61,7 +54,6 @@ def worker_benchmark(algo_name, work_factor):
 
 
 def main():
-    # Load instance
     _, optimal_cost, instance_data = load_tsp_instance()
     logger.info(f"Generating relative work figures for {instance_data['name']} (optimal: {optimal_cost:.2f})")
     
@@ -86,7 +78,6 @@ def main():
 
     logger.info(f"Work per step: {work_per_step}")
 
-    # Prepare args: for each algo, N_RUNS runs
     args_list = []
     for algo_name in solvers:
         for _ in range(N_RUNS):
@@ -107,13 +98,11 @@ def main():
             result = run_single_benchmark(create_func, None, work_factor)
             all_results_list.append((algo_name, result))
 
-    # Group by algorithm
     all_results = {name: [] for name in solvers}
     for algo_name, result in all_results_list:
         all_results[algo_name].append(result)
 
-    # Plot
-    fig, ax = create_plot(
+    _, ax = create_plot(
         "Algorithm Performance vs Normalized Work",
         f"Normalized Steps (Reference: {reference_algo})",
         "Best Cost"
@@ -142,17 +131,14 @@ def main():
         
         aligned_best = np.array(aligned_best)
         
-        # Calculate mean and std
         mean_best = np.mean(aligned_best, axis=0)
         std_best = np.std(aligned_best, axis=0)
         
-        # Plot
         ax.plot(common_norm_steps, mean_best, label=f"{algo_name}", 
                 color=colors[algo_name], linewidth=2)
         ax.fill_between(common_norm_steps, mean_best - std_best, mean_best + std_best, 
                         alpha=0.2, color=colors[algo_name])
         
-        # Final stats
         final_mean = mean_best[-1]
         final_std = std_best[-1]
         logger.info(f"{algo_name}: Final mean cost {final_mean:.2f} ± {final_std:.2f}")

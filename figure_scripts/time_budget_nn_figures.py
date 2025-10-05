@@ -10,7 +10,6 @@ from .common import load_tsp_instance, create_solvers, create_plot
 from algorithm.nearest_neighbor import NearestNeighbor
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -53,13 +52,11 @@ def run_single_time_trial(args):
 
 
 def main():
-    # Load instance (shared)
     instance, optimal_cost, instance_data = load_tsp_instance()
     logger.info(f"Generating time-budget figures for {instance_data['name']} (optimal: {optimal_cost:.2f}) with NN init")
     
     algorithms = ["SA_NN", "GA_NN"]
     
-    # Prepare args: for each algo, N_RUNS runs
     args_list = []
     for name in algorithms:
         for _ in range(N_RUNS):
@@ -82,8 +79,7 @@ def main():
     for res in all_results:
         results_by_algo[res['name']].append(res)
     
-    # Plot
-    fig, ax = create_plot(
+    _, ax = create_plot(
         f'TSP Algorithm Comparison: Time Budget with NN init ({MAX_SECONDS}s, {N_RUNS} runs each)',
         'Time (seconds)',
         'Best Cost'
@@ -116,17 +112,14 @@ def main():
         
         aligned_best = np.array(aligned_best)
         
-        # Calculate mean and std
         mean_best = np.mean(aligned_best, axis=0)
         std_best = np.std(aligned_best, axis=0)
         
-        # Plot
         ax.plot(common_times, mean_best, label=f"{algo_name}", 
                 color=colors[algo_name], linestyle=linestyles[algo_name], linewidth=2)
         ax.fill_between(common_times, mean_best - std_best, mean_best + std_best, 
                         alpha=0.2, color=colors[algo_name])
         
-        # Final stats
         final_mean = mean_best[-1]
         final_std = std_best[-1]
         gap = ((final_mean / optimal_cost - 1) * 100) if optimal_cost else 0

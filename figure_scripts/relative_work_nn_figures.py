@@ -10,7 +10,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from algorithm.nearest_neighbor import NearestNeighbor
 from tsp.model import TSPInstance
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -43,12 +42,7 @@ def run_single_benchmark(create_solver_func, initial_route, work_factor, max_nor
     solver = create_solver_func()
     solver.initialize(initial_route)
     
-    # Calculate max actual steps based on normalized steps
-    max_actual_steps = math.floor(max_normalized_steps / work_factor)
-    
-    # Ensure at least one step is run
-    if max_actual_steps < 1:
-        max_actual_steps = 1
+    max_actual_steps = max(1, math.floor(max_normalized_steps / work_factor))
     
     results = []
     for step in range(max_actual_steps):
@@ -74,7 +68,6 @@ def worker_benchmark_nn(display_name, orig_key, work_factor):
 
 
 def main():
-    # Load instance
     instance, optimal_cost, instance_data = load_tsp_instance()
     initial_route = get_nn_route(instance)
     logger.info(f"Generating relative work figures for {instance_data['name']} (optimal: {optimal_cost:.2f}) with NN init")
@@ -83,7 +76,7 @@ def main():
     solvers = create_solvers()
     steps_per_second = {}
     for algo_name, create_func in solvers.items():
-        steps_per_second[algo_name] = calibrate_steps_per_second(create_func)
+        steps_per_second[algo_name] = calibrate_steps_per_second(create_func, initial_route)
     
     logger.info(f"Steps per second: {steps_per_second}")
 
@@ -100,13 +93,11 @@ def main():
 
     logger.info(f"Work per step: {work_per_step}")
 
-    # Define display names and original keys
     algo_configs = [
         ('SA_NN', 'SA_random'),
         ('GA_NN', 'GA_random')
     ]
 
-    # Prepare args: for each algo config, N_RUNS runs
     args_list = []
     for display_name, orig_key in algo_configs:
         work_factor = work_per_step[orig_key]
@@ -128,13 +119,12 @@ def main():
             result = run_single_benchmark(create_func, initial_route, work_factor)
             all_results_list.append((display_name, result))
 
-    # Group by display name
     all_results = {display: [] for display, _ in algo_configs}
     for display_name, result in all_results_list:
         all_results[display_name].append(result)
 
     # Plot
-    fig, ax = create_plot(
+    _, ax = create_plot(
         "Algorithm Performance vs Normalized Work with NN init",
         f"Normalized Steps (Reference: {reference_algo})",
         "Best Cost"
@@ -163,17 +153,14 @@ def main():
         
         aligned_best = np.array(aligned_best)
         
-        # Calculate mean and std
         mean_best = np.mean(aligned_best, axis=0)
         std_best = np.std(aligned_best, axis=0)
         
-        # Plot
         ax.plot(common_norm_steps, mean_best, label=f"{algo_name}", 
                 color=colors[algo_name], linewidth=2)
         ax.fill_between(common_norm_steps, mean_best - std_best, mean_best + std_best, 
                         alpha=0.2, color=colors[algo_name])
         
-        # Final stats
         final_mean = mean_best[-1]
         final_std = std_best[-1]
         logger.info(f"{algo_name}: Final mean cost {final_mean:.2f} ± {final_std:.2f}")

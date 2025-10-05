@@ -7,7 +7,6 @@ from algorithm.genetic_algo import GeneticAlgorithmSolver
 
 
 def load_tsp_instance(tsp_filename=DATASET_FILENAME):
-    """Load TSP instance from dataset."""
     tsp_path = Path('dataset') / tsp_filename
     instance, optimal_cost = find_optimal_tour(tsp_path)
     instance_data = {'name': instance.name, 'cities': instance.cities}
@@ -15,7 +14,6 @@ def load_tsp_instance(tsp_filename=DATASET_FILENAME):
 
 
 def create_solvers():
-    """Create solver factories."""
     def create_sa_solver():
         instance, _, _ = load_tsp_instance()
         T0 = INITIAL_TEMP
@@ -40,7 +38,6 @@ def create_solvers():
 
 
 def create_plot(title, xlabel, ylabel, figsize=(10, 6)):
-    """Create and configure a plot."""
     fig, ax = plt.subplots(figsize=figsize)
     ax.set_title(title)
     ax.set_xlabel(xlabel)

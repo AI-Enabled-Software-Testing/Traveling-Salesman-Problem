@@ -9,7 +9,6 @@ from tqdm import tqdm
 from tsp.model import TSPInstance
 from algorithm.nearest_neighbor import NearestNeighbor
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -32,19 +31,17 @@ def run_single_box_trial(args):
         raise ValueError(f"Unknown algorithm: {name}")
     
     instance = TSPInstance(name=instance_data['name'], cities=instance_data['cities'])
-    iterations, best_costs, current_costs, times, best_route = run_algorithm_with_timing(
+    _, best_costs, _, _, _ = run_algorithm_with_timing(
         instance, solver, init_route, MAX_SECONDS
     )
     return best_costs[-1] if best_costs else float('inf')
 
 def main():
-    # Load instance (shared)
     _, optimal_cost, instance_data = load_tsp_instance()
     logger.info(f"Generating box plots for lin105 (optimal: {optimal_cost:.2f})")
     
     algorithms = ["SA_random", "GA_random", "SA_NN", "GA_NN"]
     
-    # Prepare args: for each algo, N_RUNS runs
     args_list = []
     for name in algorithms:
         use_nn = name.endswith('_NN')
