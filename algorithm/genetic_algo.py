@@ -80,7 +80,6 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         # Evaluate fitness for each individual in the population
         population_with_fitness = [(ind, self._get_fitness(ind)) for ind in self.population]
         
-        # Update the best-known solution if a better one is found
         improved = False
         fitness_sum = 0.0
         for candidate, fitness in population_with_fitness:
@@ -92,16 +91,16 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         
         average_fitness = fitness_sum / len(self.population)
 
-        # Create the next generation
+
         new_population = []
 
-        # Elitism: carry over the best individuals to the next generation
+        # Carry best individuals to the next generation
         if self.elitism_count > 0:
             population_with_fitness.sort(key=lambda x: x[1])
             elite = [ind for ind, _ in population_with_fitness[:self.elitism_count]]
             new_population.extend(elite)
 
-        # Generate the rest of the new population through selection, crossover, and mutation
+        # Selection, crossover, and mutation steps
         while len(new_population) < self.population_size:
             parent1 = self.select_parent()
             parent2 = self.select_parent()
@@ -124,14 +123,14 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         return self.best_cost
     
     def select_parent(self) -> List[int]:
-        """Selects a parent from the population using tournament selection."""
+        """Tournament selection."""
         tournament_size = max(2, self.population_size // 10)
         tournament = self.rng.sample(self.population, tournament_size)
         tournament.sort(key=lambda route: self._get_fitness(route))
         return tournament[0]
 
     def crossover(self, parent1: List[int], parent2: List[int]) -> List[int]:
-        """Performs Ordered Crossover (OX) on two parents to create a child."""
+        """Ordered Crossover (OX) for TSP."""
         if self.rng.random() > self.crossover_rate:
             return self.rng.choice([parent1, parent2])[:]
         
@@ -151,7 +150,7 @@ class GeneticAlgorithmSolver(IterativeTSPSolver):
         return child
 
     def mutate(self, route: List[int]) -> List[int]:
-        """Applies a 2-opt mutation to a route."""
+        """2-opt mutation."""
         mutated_route = route[:]
         n = len(mutated_route)
         i, j = sorted(self.rng.sample(range(n), 2))
