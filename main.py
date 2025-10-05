@@ -2,9 +2,6 @@ import pandas as pd # for csv output
 
 # Utilities
 from pathlib import Path
-import time
-import matplotlib.pyplot as plt
-import random
 from constants import *
 from util import *
 import sys
