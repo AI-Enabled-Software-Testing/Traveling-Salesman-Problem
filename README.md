@@ -1,6 +1,6 @@
 # Heuristic TSP Solver for CSI 5186 Assignment 1
 
-This repository contains the implementation of a Travelling Salesman Problem (TSP) solver for the CSI 5186 – AI-enabled Software Verification and Testing course, Assignment 1, Autumn 2025. 
+This repository contains the implementation of a Travelling Salesman Problem (TSP) solver for the CSI 5186 – AI-enabled Software Verification and Testing course, Assignment 1, Autumn 2025. [Report](./CSI5186_AI_Testing_Assignment_1___Fernando__Kelvin.pdf)
 
 The project is developed by Fernando Nogueira and Kelvin Mock.
 
