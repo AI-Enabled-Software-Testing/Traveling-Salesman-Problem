@@ -109,6 +109,17 @@ uv run python generate_figures.py
 
 Ensure the dataset is set up (run `uv run python setup_dataset.py` if not already done).
 
+## Hyperparam Tuning
+
+The `tuning/` directory contains scripts for hyperparameter tuning of  GA and SA. These tune parameters over a fixed time budget on the lin105.tsp instance.
+
+```bash
+uv run python -m tuning.ga_tuning
+uv run python -m tuning.sa_tuning
+```
+
+The console output should include output of the best params.
+
 ## Project Structure
 
 The project is organized into directories for core functionality, algorithms, data handling, and analysis:

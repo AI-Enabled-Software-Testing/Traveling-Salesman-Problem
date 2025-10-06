@@ -6,12 +6,17 @@ from tsp.model import TSPInstance
 
 from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
 from util import run_algorithm_with_timing
-from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, run_parallel_trials, align_series, save_figure, ALGO_COLORS, ALGO_LINESTYLES, add_optimal_line
+from .common import (
+    load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, 
+    run_parallel_trials, align_series, save_figure, ALGO_COLORS, ALGO_LINESTYLES, 
+    add_optimal_line, create_time_budget_statistics, save_statistics_json, compute_statistics
+)
 from algorithm.nearest_neighbor import NearestNeighbor
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
+
 
 
 def get_nn_route(instance):
@@ -70,6 +75,26 @@ def main():
     results_by_algo = {name: [] for name in algorithms}
     for res in all_results:
         results_by_algo[res['name']].append(res)
+    
+    # Compute statistics for each algorithm
+    stats_by_algo = {}
+    for algo_name, algo_results in results_by_algo.items():
+        if not algo_results:
+            continue
+        
+        final_costs = [r['best_costs'][-1] if r['best_costs'] else float('inf') for r in algo_results]
+        iterations = [len(r['iterations']) if r['iterations'] else 0 for r in algo_results]
+        convergence_times = [r['times'][-1] if r['times'] else MAX_SECONDS for r in algo_results]
+        
+        stats_by_algo[algo_name] = {
+            'final_costs': compute_statistics(final_costs, optimal_cost),
+            'iterations': compute_statistics(iterations),
+            'convergence_times': compute_statistics(convergence_times)
+        }
+    
+    # Create and save statistics
+    statistics = create_time_budget_statistics(instance_data, optimal_cost, stats_by_algo, algorithms, use_nn=True)
+    save_statistics_json(statistics, 'time_budget_nn_figures.json')
     
     fig, ax = create_plot(
         f'TSP Algorithm Comparison: Time Budget with NN init ({MAX_SECONDS}s, {N_RUNS} runs each)',

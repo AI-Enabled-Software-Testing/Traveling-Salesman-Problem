@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-05T21:07:51.080293",
+    "tsp_instance": "lin105",
+    "optimal_cost": 14382.99593345118,
+    "experiment_settings": {
+      "calibration_time": 2.0,
+      "max_normalized_steps": 100000,
+      "n_runs": 5,
+      "parallel_runs": true,
+      "num_workers": 8
+    }
+  },
+  "algorithms": {
+    "SA_NN": {
+      "count": 5,
+      "mean": 15105.335039092422,
+      "std": 227.14899992371673,
+      "min": 14818.039927233118,
+      "max": 15514.393695364863,
+      "median": 15077.33711746094,
+      "q1": 15020.137768038432,
+      "q3": 15096.766687364763,
+      "iqr": 76.62891932633102,
+      "gap_to_optimal_pct": 5.022174163042514,
+      "best_gap_to_optimal_pct": 3.024710538714226,
+      "worst_gap_to_optimal_pct": 7.866217630517025
+    },
+    "GA_NN": {
+      "count": 5,
+      "mean": 15641.689307109691,
+      "std": 304.11176134903997,
+      "min": 15061.366940332795,
+      "max": 15868.301711062595,
+      "median": 15812.26029612355,
+      "q1": 15614.035931714898,
+      "q3": 15852.481656314621,
+      "iqr": 238.4457245997237,
+      "gap_to_optimal_pct": 8.751260025952657,
+      "best_gap_to_optimal_pct": 4.716479167625276,
+      "worst_gap_to_optimal_pct": 10.326817753990824
+    }
+  },
+  "calibration": {
+    "steps_per_second": {
+      "SA_random": 51324.3967857924,
+      "GA_random": 142.34324386420715
+    },
+    "reference_algorithm": "SA_random",
+    "work_per_step": {
+      "SA_random": 1.0,
+      "GA_random": 360.5678456699704
+    }
+  },
+  "experiment_config": {
+    "max_normalized_steps": 100000,
+    "n_runs": 5,
+    "algorithms": [
+      "SA_NN",
+      "GA_NN"
+    ],
+    "use_nn_initialization": true
+  }
+}

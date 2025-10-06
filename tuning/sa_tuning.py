@@ -57,8 +57,8 @@ def evaluate_sa_params_parallel(params: dict, instance, time_budget_seconds: flo
 
 def main():
     ### CONFIGURATION ###
-    TIME_BUDGET_PER_EVALUATION_SECONDS = 10.0
-    TOTAL_TUNING_TIME_MINUTES = 30.0
+    TIME_BUDGET_PER_EVALUATION_SECONDS = 5.0
+    TOTAL_TUNING_TIME_MINUTES = 10.0
     N_RUNS_PER_EVALUATION = 4 
     ### END CONFIGURATION ###
 

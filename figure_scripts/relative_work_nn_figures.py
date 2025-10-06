@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import logging
 from tqdm import tqdm
 import numpy as np
+import json
+from datetime import datetime
 from constants import CALIBRATION_TIME, MAX_NORMALIZED_STEPS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
 from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, align_series, save_figure, ALGO_COLORS, add_optimal_line
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -11,6 +13,31 @@ from tsp.model import TSPInstance
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
+
+def compute_statistics(data, optimal_cost=None):
+    """Compute comprehensive statistics for a dataset."""
+    if not data or len(data) == 0:
+        return {}
+    
+    data = np.array(data)
+    stats = {
+        'count': len(data),
+        'mean': float(np.mean(data)),
+        'std': float(np.std(data)),
+        'min': float(np.min(data)),
+        'max': float(np.max(data)),
+        'median': float(np.median(data)),
+        'q1': float(np.percentile(data, 25)),
+        'q3': float(np.percentile(data, 75)),
+        'iqr': float(np.percentile(data, 75) - np.percentile(data, 25))
+    }
+    
+    if optimal_cost and optimal_cost > 0:
+        stats['gap_to_optimal_pct'] = float((stats['mean'] / optimal_cost - 1) * 100)
+        stats['best_gap_to_optimal_pct'] = float((stats['min'] / optimal_cost - 1) * 100)
+        stats['worst_gap_to_optimal_pct'] = float((stats['max'] / optimal_cost - 1) * 100)
+    
+    return stats
 
 
 def calibrate_steps_per_second(create_solver_func, initial_route=None, calibration_time=CALIBRATION_TIME):
@@ -112,6 +139,51 @@ def main():
     all_results = {display: [] for display, _ in algo_configs}
     for display_name, result in all_results_list:
         all_results[display_name].append(result)
+    
+    # Compute statistics for final costs
+    stats_by_algo = {}
+    for algo_name, algo_runs in all_results.items():
+        if not algo_runs:
+            continue
+        
+        final_costs = []
+        for run_data in algo_runs:
+            if run_data:
+                final_costs.append(run_data[-1][1])  # Last cost in the run
+        
+        stats_by_algo[algo_name] = compute_statistics(final_costs, optimal_cost)
+    
+    # Save statistics to JSON
+    statistics = {
+        'metadata': {
+            'generated_at': datetime.now().isoformat(),
+            'tsp_instance': instance_data['name'],
+            'optimal_cost': optimal_cost,
+            'experiment_settings': {
+                'calibration_time': CALIBRATION_TIME,
+                'max_normalized_steps': MAX_NORMALIZED_STEPS,
+                'n_runs': N_RUNS,
+                'parallel_runs': PARALLEL_RUNS,
+                'num_workers': NUM_WORKERS
+            }
+        },
+        'algorithms': stats_by_algo,
+        'calibration': {
+            'steps_per_second': steps_per_second,
+            'reference_algorithm': reference_algo,
+            'work_per_step': work_per_step
+        },
+        'experiment_config': {
+            'max_normalized_steps': MAX_NORMALIZED_STEPS,
+            'n_runs': N_RUNS,
+            'algorithms': [display for display, _ in algo_configs],
+            'use_nn_initialization': True
+        }
+    }
+    
+    with open('figures/relative_work_nn_figures.json', 'w') as f:
+        json.dump(statistics, f, indent=2)
+    logger.info("Saved figures/relative_work_nn_figures.json")
     
     # Plot
     fig, ax = create_plot(
