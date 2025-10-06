@@ -120,6 +120,14 @@ uv run python -m tuning.sa_tuning
 
 The console output should include output of the best params.
 
+## TSP Analysis Notebook
+
+You can compile the notebook to PDF by running:
+
+```
+uv run jupyter nbconvert --to pdf tsp_analysis.ipynb
+```
+
 ## Project Structure
 
 The project is organized into directories for core functionality, algorithms, data handling, and analysis:
