@@ -1,10 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import logging
 from tsp.model import TSPInstance
 
-from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
+from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS
 from util import run_algorithm_with_timing
 from .common import (
     load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, 
@@ -13,7 +11,6 @@ from .common import (
     compute_nn_baseline
 )
 from algorithm.nearest_neighbor import NearestNeighbor
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)

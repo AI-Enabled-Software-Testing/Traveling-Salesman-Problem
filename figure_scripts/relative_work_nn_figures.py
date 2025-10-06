@@ -1,6 +1,5 @@
 import time
 import math
-import matplotlib.pyplot as plt
 import logging
 from tqdm import tqdm
 import numpy as np

@@ -1,17 +1,14 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import logging
 from tsp.model import TSPInstance
 
-from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
+from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS
 from util import run_algorithm_with_timing
 from .common import (
     load_tsp_instance, create_solvers, create_plot, run_parallel_trials, 
     align_series, save_figure, ALGO_COLORS, ALGO_LINESTYLES, add_optimal_line,
     create_time_budget_statistics, save_statistics_json, compute_statistics
 )
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)

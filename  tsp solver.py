@@ -2,8 +2,8 @@ import pandas as pd # for csv output
 
 # Utilities
 from pathlib import Path
-from constants import *
-from util import *
+from constants import N_RUNS, MAX_SECONDS, MAX_ITERATIONS
+from util import find_optimal_tour, setup_algorithm, run_single_trial_by_timing, run_single_iteration_trial
 import sys
 import logging
 from multiprocessing import Pool, cpu_count

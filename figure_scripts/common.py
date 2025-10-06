@@ -10,7 +10,6 @@ from constants import INITIAL_TEMP, COOLING_RATE, POPULATION_SIZE, MUTATION_RATE
 from util import find_optimal_tour, exponential_cooling
 from algorithm.simulated_annealing import SimulatedAnnealing
 from algorithm.genetic_algo import GeneticAlgorithmSolver
-from tsp.model import TSPInstance
 from algorithm.nearest_neighbor import NearestNeighbor
 
 

@@ -1,15 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
-from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
+from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS
 from .common import (
     load_tsp_instance, create_solvers, create_plot, get_nn_initial_route,
-    compute_nn_baseline, run_parallel_trials, save_figure, ALGO_COLORS,
-    create_box_plot_statistics, save_statistics_json, compute_statistics
+    compute_nn_baseline, run_parallel_trials, save_figure, create_box_plot_statistics, save_statistics_json
 )
 from util import run_algorithm_with_timing
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from tqdm import tqdm
 from tsp.model import TSPInstance
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
