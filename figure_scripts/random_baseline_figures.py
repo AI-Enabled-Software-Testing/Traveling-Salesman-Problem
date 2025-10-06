@@ -104,7 +104,7 @@ def main():
         f'Random Baseline Performance Distribution (Final Costs after {MAX_SECONDS}s)', 
         'Algorithms', 
         'Gap to Optimal (%)',
-        figsize=(6, 8)  # Make it narrower and taller
+        figsize=(5, 6) 
     )
     
     # Create box plot with custom colors

@@ -86,7 +86,7 @@ def align_series(x_lists, y_lists, common_x):
 def save_figure(fig, filepath):
     """Save and show the figure."""
     plt.tight_layout()
-    plt.savefig(filepath, dpi=300, bbox_inches='tight')
+    plt.savefig(filepath, dpi=150, bbox_inches='tight')
     plt.show()
 
 def add_optimal_line(ax, optimal_cost):
