@@ -29,6 +29,13 @@ For example, for a solution visiting cities 5, 4, 1, 3, 2 with distance 8934.12:
 3
 2
 ```
+Optionally, you could select an algorithm in the third command-line argument. Here are the allowed argument names: 
+* SimulatedAnnealing_random
+* SimulatedAnnealing_NearestNeighbor
+* GeneticAlgorithm_NearestNeighbor
+* Baseline_Random
+
+By default, **Simulated Annealing with Nearest Neighbor** search is chosen given its lowest cost.
 
 The submission includes the implementation files and a detailed report (as .pdf) describing the solution, approach, and optimizations implemented.
 
