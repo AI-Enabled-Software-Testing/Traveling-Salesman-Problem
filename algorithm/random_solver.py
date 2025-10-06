@@ -8,7 +8,7 @@ from .base import IterativeTSPSolver, StepReport
 
 
 class RandomSolver(IterativeTSPSolver):
-    """Each iteration samples a new random permutation; keeps track of the best seen."""
+    """Random permutation sampling."""
 
     def __init__(self, instance: TSPInstance, seed: int | float | None = None):
         self.instance = instance
