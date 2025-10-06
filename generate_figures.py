@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from figure_scripts import time_budget_figures, relative_work_figures, time_budget_nn_figures, relative_work_nn_figures, box_plot_figures
+from figure_scripts import time_budget_figures, relative_work_figures, time_budget_nn_figures, relative_work_nn_figures, box_plot_figures, random_baseline_figures
 from constants import DATASET_FILENAME
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -22,11 +22,12 @@ def main():
         return  # Exit without generating
 
     scripts = [
+        ("box_plot_figures", box_plot_figures.main),
+        ("random_baseline_figures", random_baseline_figures.main),
         ("time_budget_figures", time_budget_figures.main),
-        ("relative_work_figures", relative_work_figures.main),
         ("time_budget_nn_figures", time_budget_nn_figures.main),
-        ("relative_work_nn_figures", relative_work_nn_figures.main),
-        ("box_plot_figures", box_plot_figures.main)
+        ("relative_work_figures", relative_work_figures.main),
+        ("relative_work_nn_figures", relative_work_nn_figures.main)
     ]
     
     for script_name, main_func in scripts:

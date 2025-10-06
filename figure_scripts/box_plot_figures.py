@@ -72,7 +72,7 @@ def main():
     _, ax = create_plot(f'Algorithm Performance Distribution (Final Costs after {MAX_SECONDS}s)', 'Algorithms', 'Gap to Optimal (%)')
     ax.boxplot([gaps_by_algo[name] for name in algorithms], tick_labels=algorithms)
     ax.axhline(y=0, color='green', linestyle=':', label='Optimal')
-    ax.axhline(y=nn_gap, color='orange', linestyle='--', label=f'NN Baseline ({nn_gap:.1f}%)')
+    ax.axhline(y=nn_gap, color='orange', linestyle='--', label='NN')
     ax.legend()
     
     save_figure(plt.gcf(), 'figures/box_plot_figures.png')
