@@ -35,7 +35,7 @@ Optionally, you could select an algorithm in the third command-line argument. He
 * GeneticAlgorithm_NearestNeighbor
 * Baseline_Random
 
-By default, **Simulated Annealing with Nearest Neighbor** search is chosen given its lowest cost.
+By default, **Simulated Annealing with Nearest Neighbor** search is chosen given its consistent best results.
 
 The submission includes the implementation files and a detailed report (as .pdf) describing the solution, approach, and optimizations implemented.
 
