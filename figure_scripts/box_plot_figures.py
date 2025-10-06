@@ -2,7 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 from constants import MAX_SECONDS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
-from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, compute_nn_baseline, run_parallel_trials, save_figure, ALGO_COLORS
+from .common import (
+    load_tsp_instance, create_solvers, create_plot, get_nn_initial_route,
+    compute_nn_baseline, run_parallel_trials, save_figure, ALGO_COLORS,
+    create_box_plot_statistics, save_statistics_json, compute_statistics
+)
 from util import run_algorithm_with_timing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
@@ -67,6 +71,10 @@ def main():
     nn_cost = compute_nn_baseline(instance)
     nn_gap = ((nn_cost / optimal_cost - 1) * 100) if optimal_cost else 0
     logger.info("Nearest Neighbor")
+    
+    # Create and save statistics
+    statistics = create_box_plot_statistics(instance, optimal_cost, instance_data, costs_by_algo, algorithms)
+    save_statistics_json(statistics, 'box_plot_figures.json')
     
     # Plot box plot
     _, ax = create_plot(f'Algorithm Performance Distribution (Final Costs after {MAX_SECONDS}s)', 'Algorithms', 'Gap to Optimal (%)')

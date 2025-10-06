@@ -7,7 +7,7 @@ import numpy as np
 import json
 from datetime import datetime
 from constants import CALIBRATION_TIME, MAX_NORMALIZED_STEPS, N_RUNS, PARALLEL_RUNS, NUM_WORKERS
-from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, align_series, save_figure, ALGO_COLORS, add_optimal_line
+from .common import load_tsp_instance, create_solvers, create_plot, get_nn_initial_route, align_series, save_figure, ALGO_COLORS, add_optimal_line, compute_nn_baseline
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tsp.model import TSPInstance
 
@@ -220,6 +220,12 @@ def main():
         logger.info(f"{algo_name}: Final mean cost {final_mean:.2f} ± {final_std:.2f}")
     
     add_optimal_line(ax, optimal_cost)
+    
+    # Add NN baseline line
+    instance = TSPInstance(name=instance_data['name'], cities=instance_data['cities'])
+    nn_cost = compute_nn_baseline(instance)
+    ax.axhline(y=nn_cost, color='orange', linestyle='--', label='NN', alpha=0.7, linewidth=2)
+    
     ax.legend()
     
     save_figure(fig, 'figures/relative_work_nn_figures.png')
