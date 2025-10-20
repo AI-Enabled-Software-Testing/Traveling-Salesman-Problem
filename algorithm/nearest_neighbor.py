@@ -8,49 +8,62 @@ from .base import IterativeTSPSolver, StepReport
 
 
 class NearestNeighbor(IterativeTSPSolver):
-    """Constructive iterative nearest neighbor.
-
-    Each step adds one more nearest unvisited city to the route until complete.
-    """
+    """Nearest neighbor sampling."""
 
     def __init__(self, instance: TSPInstance, seed: int | float | None = None):
         self.instance = instance
         self.rng = random.Random(seed)
-        self.route: List[int] = []
-        self.unvisited: List[int] = []
         self.iteration = 0
 
-    def initialize(self, route: list[int] | None = None) -> None:
+        self.best_route: List[int] = []
+        self.best_cost: float = float("inf")
+
+    def _build_nn_route(self, start_city: int) -> List[int]:
         n = len(self.instance.cities)
+        route: List[int] = [start_city]
+        unvisited: List[int] = [i for i in range(n) if i != start_city]
+        while unvisited:
+            last = route[-1]
+            next_city = min(unvisited, key=lambda j: self.instance.distance(last, j))
+            unvisited.remove(next_city)
+            route.append(next_city)
+        return route
+
+    def initialize(self, route: List[int] | None = None) -> None:
+        n = len(self.instance.cities)
+        self.iteration = 0
         if route and len(route) > 0:
-            self.route = [route[0]]
-            self.unvisited = [i for i in range(n) if i not in self.route]
+            start_city = route[0]
         else:
             start_city = self.rng.randint(0, n - 1)
-            self.route = [start_city]
-            self.unvisited = [i for i in range(n) if i != start_city]
-        self.iteration = 0
+        candidate = self._build_nn_route(start_city)
+        self.best_route = candidate
+        self.best_cost = self.instance.route_cost(candidate)
 
     def step(self) -> StepReport:
         self.iteration += 1
+        n = len(self.instance.cities)
+        start_city = self.rng.randint(0, n - 1)
+        candidate = self._build_nn_route(start_city)
+        current_cost = self.instance.route_cost(candidate)
+
         improved = False
-        if self.unvisited:
-            last = self.route[-1] # FIFO
-            # Pick nearest unvisited
-            next_city = min(self.unvisited, key=lambda j: self.instance.distance(last, j))
-            self.unvisited.remove(next_city)
-            self.route.append(next_city)
+        if current_cost < self.best_cost:
+            self.best_cost = current_cost
+            self.best_route = candidate
             improved = True
-        current_cost = self.get_cost()
-        return StepReport(iteration=self.iteration, best_cost=current_cost, current_cost=current_cost, improved=improved)
+
+        return StepReport(
+            iteration=self.iteration,
+            best_cost=self.best_cost,
+            current_cost=current_cost,
+            improved=improved,
+        )
 
     def get_route(self) -> List[int]:
-        # If incomplete, return current partial route followed by unvisited
-        return self.route + self.unvisited
+        return self.best_route
 
     def get_cost(self) -> float:
-        if len(self.route) < 2:
-            return 0.0
-        return self.instance.route_cost(self.get_route())
+        return self.best_cost
 
 

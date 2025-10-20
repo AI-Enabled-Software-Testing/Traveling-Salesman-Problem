@@ -1,0 +1,13 @@
+{
+  "sa_tuning": {
+    "initial_temp": 4531.442,
+    "cooling_rate": 0.99990
+  },
+  "ga_tuning": {
+    "population_size": 63,
+    "crossover_rate": 0.794,
+    "mutation_rate": 0.378,
+    "elitism_count": 9
+  }
+}
+

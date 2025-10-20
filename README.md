@@ -20,7 +20,7 @@ The program takes a .tsp file as input and produces:
 
 For example, for a solution visiting cities 5, 4, 1, 3, 2 with distance 8934.12:
 ```
-> python main.py aaa.tsp
+> python tsp_solver.py aaa.tsp
 8934.12
 > cat solution.csv
 5
@@ -39,16 +39,9 @@ By default, **Simulated Annealing with Nearest Neighbor** search is chosen given
 
 The submission includes the implementation files and a detailed report (as .pdf) describing the solution, approach, and optimizations implemented.
 
-Note: The submission must be self-contained, with no dependencies on external files. Solvers should work out of the box, with reasonable documentation.
-
 ## Dataset Setup
 
-This project includes a dataset setup script that downloads and filters TSP instances from TSPLIB95. The script automatically:
-
-1. Downloads the complete TSPLIB95 dataset
-2. Filters for TSP instances with `TYPE: TSP` and `EDGE_WEIGHT_TYPE: EUC_2D`
-3. Extracts corresponding optimal tour files (`.opt.tour`) when available
-4. Saves all files to the `dataset/` directory
+This project includes a dataset setup script that downloads and filters TSP instances from TSPLIB95.
 
 To set up the dataset:
 ```bash
@@ -81,53 +74,82 @@ The `uv run` commands will automatically handle the virtual environment for you.
    git clone <repository-url>
    cd <repository-name>
    python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   source .venv/bin/activate
    pip install -e .
    ```
 
 2. **Run commands**:
    ```bash
    python setup_dataset.py
-   python main.py dataset/<filename>.tsp
+   python tsp_solver.py dataset/<filename>.tsp
    ```
 
 ## Usage
 
 To run the solver:
+
 ```
-uv run python main.py <path-to-input.tsp>
+uv run python tsp_solver.py <problem.tsp>
 ```
 
 This will output the total distance to stdout and generate `solution.csv` in the current directory.
 
 For development or testing, use `uv run python` to execute scripts in the project environment.
 
+## Generating Figures
+
+To generate performance figures for the TSP algorithms, you can run individual scripts from the `figure_scripts/` directory.
+
+```bash
+uv run python -m figure_scripts.box_plot_figures        
+uv run python -m figure_scripts.relative_work_figures   
+uv run python -m figure_scripts.relative_work_nn_figures 
+uv run python -m figure_scripts.time_budget_figures     
+uv run python -m figure_scripts.time_budget_nn_figures 
+```
+
+To generate all figures at once:
+
+```bash
+uv run python generate_figures.py
+```
+
+Ensure the dataset is set up (run `uv run python setup_dataset.py` if not already done).
+
+## Hyperparam Tuning
+
+The `tuning/` directory contains scripts for hyperparameter tuning of  GA and SA. These tune parameters over a fixed time budget on the lin105.tsp instance.
+
+```bash
+uv run python -m tuning.ga_tuning
+uv run python -m tuning.sa_tuning
+```
+
+The console output should include output of the best params.
+
+## TSP Analysis Notebook
+
+You can compile the notebook to PDF by running:
+
+```
+uv run jupyter nbconvert --to pdf tsp_analysis.ipynb
+```
+
 ## Project Structure
 
-The project is organized into several key packages and modules:
+The project is organized into directories for core functionality, algorithms, data handling, and analysis:
 
 ### Core Modules
-- `main.py`: Main solver script and entry point.
-- `setup_dataset.py`: Dataset setup script for downloading and filtering TSP instances from TSPLIB95.
+- Entry point and utilities: `main.py`, `setup_dataset.py`, `generate_figures.py`, `constants.py`, `util.py`.
 
-### Package Organization
+### Packages
+- `tsp/`: Core TSP model and I/O.
+- `algorithm/`: Heuristic algorithm implementations (e.g., genetic, simulated annealing, nearest neighbor and random solver).
+- `figure_scripts/`: Scripts for generating performance visualizations (e.g., box plots, time budgets, relative work comparisons).
+- `tuning/`: Hyperparameter tuning scripts.
+- `tests/`: Tests.
 
-#### `tsp/` - TSP Core Package
-- `model.py`: Core data structures (`City`, `TSPInstance`) and distance calculations.
-- `io.py`: TSPLIB file parsing utilities for reading `.tsp` files.
-
-#### `algorithm/` - Algorithm Implementations
-- `base.py`: Protocol definitions and base classes for iterative TSP solvers.
-- `nearest_neighbor.py`: Nearest neighbor constructive algorithm implementation.
-- `random_solver.py`: Random permutation solver for baseline comparison.
-
-### Data and Analysis
-- `dataset/`: Directory containing TSP instances and optimal tour files (created by setup script).
-- `bench_results/`: Directory for storing benchmark results.
-- `tsp_analysis.ipynb`: Jupyter notebook for algorithm analysis and visualization.
-
-### Configuration
-- `pyproject.toml`: Project configuration and dependencies.
-- `uv.lock`: Locked dependencies for reproducibility.
-- `README.md`: This file.
-
+### Data and Outputs
+- `dataset/`: TSP instances and optimal tours.
+- `figures/`: Generated plots.
+- `solution.csv`: Solver output file.
